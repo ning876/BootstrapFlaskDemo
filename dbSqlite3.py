@@ -82,3 +82,6 @@ def DelDataById(id1, id2, value1, value2, tablename):
     cursor.execute(sql, (value1, value2))
     conn.commit()
     CloseDb(conn)
+
+if __name__ == '__main__':
+    db=OpenDb()

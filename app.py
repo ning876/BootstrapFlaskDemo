@@ -5,7 +5,8 @@ from flask import Flask, render_template, request, flash, url_for, redirect
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
-from wtforms.fields import *
+from wtforms.fields import simple,choices
+#from wtforms.fields import *
 from wtforms.validators import DataRequired, Length
 
 from dbSqlite3 import *
@@ -24,67 +25,120 @@ bootstrap = Bootstrap(app)
 db = SQLAlchemy(app)
 
 
-class HelloForm(FlaskForm):
-    username = StringField(u'用户名', validators=[DataRequired(), Length(1, 20)])
-    password = PasswordField(u'密码', validators=[Length(0, 10)])
-    select = SelectField(u'身份', choices=[('student', 'Student'), ('teacher', 'Teacher')])
-    submit = SubmitField(u'登录')
+class IndexForm(FlaskForm):
+    select = choices.SelectField(u'操作类型', choices=[('login', 'Login'), ('register', 'Register')])
+    submit = simple.SubmitField(u'跳转')
+
+class LoginForm(FlaskForm):
+    username = simple.StringField(u'用户名', validators=[DataRequired(), Length(1, 20)])
+    password = simple.PasswordField(u'密码', validators=[Length(0, 10)])
+    select = choices.SelectField(u'身份', choices=[('student', 'Student'), ('teacher', 'Teacher')])
+    submit = simple.SubmitField(u'登录')
+
+
+class RegisterForm(FlaskForm):
+    username = simple.StringField(u'用户名', validators=[DataRequired(), Length(1, 20)])
+    password = simple.PasswordField(u'密码', validators=[Length(0, 10)])
+    #password_again = simple.SubmitField.
+    select = choices.SelectField(u'身份', choices=[('student', 'Student'), ('teacher', 'Teacher')])
+    submit = simple.SubmitField(u'注册')
 
 
 class AccountForm(FlaskForm):
-    secret = PasswordField(u'旧密码', validators=[DataRequired(), Length(0, 10)], render_kw={'placeholder': '旧密码'})
-    password = PasswordField(u'新密码', validators=[DataRequired(), Length(0, 10)], render_kw={'placeholder': '新密码'})
-    submit = SubmitField(u'修改密码')
+    secret = simple.PasswordField(u'旧密码', validators=[DataRequired(), Length(0, 10)], render_kw={'placeholder': '旧密码'})
+    password = simple.PasswordField(u'新密码', validators=[DataRequired(), Length(0, 10)], render_kw={'placeholder': '新密码'})
+    submit = simple.SubmitField(u'修改密码')
 
 
 class SelectForm(FlaskForm):
-    title = StringField(u'课程号', render_kw={'placeholder': '课程号'})
-    submit = SubmitField(u'选课')
+    title = simple.StringField(u'课程号', render_kw={'placeholder': '课程号'})
+    submit = simple.SubmitField(u'选课')
 
 
 class DeleteForm(FlaskForm):
-    title = StringField(u'课程号', render_kw={'placeholder': '课程号'})
-    submit = SubmitField(u'退课')
+    title = simple.StringField(u'课程号', render_kw={'placeholder': '课程号'})
+    submit = simple.SubmitField(u'退课')
 
 
 class ScoreForm(FlaskForm):
-    title_sno = StringField(u'学生号', render_kw={'placeholder': '学生号'})
-    title_cno = StringField(u'课程号', render_kw={'placeholder': '课程号'})
-    title_score = StringField(u'分数', render_kw={'placeholder': '分数'})
-    submit = SubmitField(u'录入')
+    title_sno = simple.StringField(u'学生号', render_kw={'placeholder': '学生号'})
+    title_cno = simple.StringField(u'课程号', render_kw={'placeholder': '课程号'})
+    title_score = simple.StringField(u'分数', render_kw={'placeholder': '分数'})
+    submit = simple.SubmitField(u'录入')
 
 
-# 登录页
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    form = HelloForm()
+    form = IndexForm()
     if request.method == "GET":
-        return render_template('index.html', form=form)
+        return render_template('Index.html', form=form)
+    if form.validate_on_submit():
+        if form.select.data == 'login':
+            return render_template('Login.html', form=LoginForm())
+        elif form.select.data == 'register':
+            return render_template('Register.html', form=RegisterForm())
+
+# 注册页
+@app.route('/Register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm()
+    if request.method == "GET":
+        return render_template('Register.html', form=form)
+
+    if form.validate_on_submit():
+
+        if form.select.data == 'student':
+            result, _ = GetSql2("select * from student where sno='%s'" % form.username.data)
+            if not result:
+
+                return render_template('Login.html', form=form)
+            else:
+                flash(u'该用户名已存在，请修改后重试', 'warning')
+                return render_template('Register.html', form=form)
+
+        if form.select.data == 'teacher':
+            result, _ = GetSql2("select * from teacher where tno='%s'" % form.username.data)
+            if not result:
+                flash(u'用户名不存在', 'warning')
+                return render_template('Login.html', form=form)
+
+            if result[0][2] == form.password.data:
+                return render_template('teacher.html', tno=form.username.data)
+            else:
+                flash(u'密码错误', 'warning')
+                return render_template('Login.html', form=form)
+
+# 登录页
+@app.route('/Login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if request.method == "GET":
+        return render_template('Login.html', form=form)
 
     if form.validate_on_submit():
         if form.select.data == 'student':
             result, _ = GetSql2("select * from student where sno='%s'" % form.username.data)
             if not result:
                 flash(u'用户名不存在', 'warning')
-                return render_template('index.html', form=form)
+                return render_template('Login.html', form=form)
 
             if result[0][5] == form.password.data:
                 return render_template('student.html', sno=form.username.data)
             else:
                 flash(u'密码错误', 'warning')
-                return render_template('index.html', form=form)
+                return render_template('Login.html', form=form)
 
         if form.select.data == 'teacher':
             result, _ = GetSql2("select * from teacher where tno='%s'" % form.username.data)
             if not result:
                 flash(u'用户名不存在', 'warning')
-                return render_template('index.html', form=form)
+                return render_template('Login.html', form=form)
 
             if result[0][2] == form.password.data:
                 return render_template('teacher.html', tno=form.username.data)
             else:
                 flash(u'密码错误', 'warning')
-                return render_template('index.html', form=form)
+                return render_template('Login.html', form=form)
 
 
 # 学生主页
