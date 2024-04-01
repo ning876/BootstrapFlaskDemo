@@ -2,5 +2,8 @@
 {% from 'bootstrap/form.html' import render_form %}
 
 {% block content %}
+    <br>
+    <p>姓名：{{ name }}</p>
+    <br>
     {{ render_form(form) }}
 {% endblock %}

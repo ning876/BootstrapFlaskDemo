@@ -1,0 +1,6 @@
+params:
+  secret_key: dev
+  SQLALCHEMY_TRACK_MODIFICATIONS: False
+  SQLALCHEMY_DATABASE_URI: sqlite:///data.db
+  BOOTSTRAP_BTN_STYLE: primary
+  BOOTSTRAP_BTN_SIZE: sm
