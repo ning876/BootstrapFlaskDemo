@@ -13,7 +13,7 @@ bp=Blueprint('College-class-manager',__name__,url_prefix='')
 def index():
     form = IndexForm()
     if request.method == "GET":
-        return render_template(os.path.join(templates_dir,'Index.html'), form=form)
+        return render_template('Index.html', form=form)
     if form.validate_on_submit():
         if form.select.data == 'login':
             return redirect('/Login')
@@ -25,7 +25,7 @@ def index():
 def register_route():
     form = Register_tmpForm()
     if request.method == "GET":
-        return render_template(os.path.join(templates_dir,'Register.html'), form=form)
+        return render_template('Register.html', form=form)
     if form.validate_on_submit():
         if form.select.data == 'student':
             return redirect('/Register_student')
@@ -37,10 +37,11 @@ def register_route():
 def register_student():
     form = Register_StudentForm()
     if request.method == "GET":
-        return render_template(os.path.join(templates_dir,'Register.html'), form=form)
+        return render_template('Register.html', form=form)
 
     if form.validate_on_submit():
         result, _ = GetSql2("select * from student where sno='%s'" % form.userid.data)
+        print(result)
         if not result:
             data=dict(
                 sno=form.userid.data,
@@ -54,13 +55,13 @@ def register_student():
             return redirect('/Login')
         else:
             flash(u'该用户名已存在，请修改后重试', 'warning')
-            return render_template(os.path.join(templates_dir,'Register.html'), form=form)
+            return render_template('Register.html', form=form)
 # 注册页
 @bp.route('/Register_teacher', methods=['GET', 'POST'])
 def register_teacher():
     form = Register_TeacherForm()
     if request.method == "GET":
-        return render_template(os.path.join(templates_dir,'Register.html'), form=form)
+        return render_template('Register.html', form=form)
 
     if form.validate_on_submit():
         result, _ = GetSql2("select * from student where sno='%s'" % form.userid.data)
@@ -74,45 +75,45 @@ def register_teacher():
             return redirect('/Login')
         else:
             flash(u'该用户名已存在，请修改后重试', 'warning')
-            return render_template(os.path.join(templates_dir,'Register.html'), form=form)
+            return render_template('Register.html', form=form)
 
 # 登录页
 @bp.route('/Login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if request.method == "GET":
-        return render_template(os.path.join(templates_dir,'Login.html'), form=form)
+        return render_template('Login.html', form=form)
 
     if form.validate_on_submit():
         if form.select.data == 'student':
             result, _ = GetSql2("select * from student where sno='%s'" % form.userid.data)
             if not result:
                 flash(u'用户名不存在，请创建！', 'warning')
-                return render_template(os.path.join(templates_dir,'Login.html'), form=form)
+                return render_template('Login.html', form=form)
 
             if result[0][5] == form.password.data:
-                return render_template(os.path.join(templates_dir,'student.html'), sno=form.userid.data)
+                return render_template('student.html', sno=form.userid.data)
             else:
                 flash(u'密码错误', 'warning')
-                return render_template(os.path.join(templates_dir,'Login.html'), form=form)
+                return render_template('Login.html', form=form)
 
         if form.select.data == 'teacher':
             result, _ = GetSql2("select * from teacher where tno='%s'" % form.userid.data)
             if not result:
                 flash(u'用户名不存在，请创建！', 'warning')
-                return render_template(os.path.join(templates_dir,'Login.html'), form=form)
+                return render_template('Login.html', form=form)
 
             if result[0][2] == form.password.data:
-                return render_template(os.path.join(templates_dir,'teacher.html'), tno=form.userid.data)
+                return render_template('teacher.html', tno=form.userid.data)
             else:
                 flash(u'密码错误', 'warning')
-                return render_template(os.path.join(templates_dir,'Login.html'), form=form)
+                return render_template('Login.html', form=form)
 
 
 # 学生主页
 @bp.route('/student/<int:sno>', methods=['GET', 'POST'])
 def student(sno):
-    return render_template(os.path.join(templates_dir,'student.html'), sno=sno)
+    return render_template('student.html', sno=sno)
 
 
 # 基本信息查看、学生个人登录密码修改功能
@@ -144,7 +145,7 @@ def student_account(sno):
         else:
             flash(u'原密码错误', 'warning')
 
-    return render_template(os.path.join(templates_dir,'student_account.html'), sno=sno, name=name, gender=gender, birthday=birthday,
+    return render_template('student_account.html', sno=sno, name=name, gender=gender, birthday=birthday,
                            major=major, form=form)
 
 
@@ -183,7 +184,7 @@ def student_course_select(sno):
                     InsertData(data, "score")
                     flash('选课成功', 'success')
 
-    return render_template(os.path.join(templates_dir,'student_course_select.html'), sno=sno, messages=messages, titles=titles, form=form)
+    return render_template('student_course_select.html', sno=sno, messages=messages, titles=titles, form=form)
 
 
 # 学生退课功能
@@ -215,7 +216,7 @@ def student_course_delete(sno):
                 return redirect(url_for('student_course_delete', sno=sno, messages=messages, titles=titles,
                                         form=form))
 
-    return render_template(os.path.join(templates_dir,'student_course_delete.html'), sno=sno, messages=messages, titles=titles, form=form)
+    return render_template('student_course_delete.html', sno=sno, messages=messages, titles=titles, form=form)
 
 
 # 学生成绩查询功能
@@ -235,13 +236,13 @@ def student_score(sno):
 
     titles = [('cno', '已选课程号'), ('cname', '课程名'), ('tname', '任课教师'), ('score', '成绩')]
 
-    return render_template(os.path.join(templates_dir,'student_score.html'), sno=sno, messages=messages, titles=titles)
+    return render_template('student_score.html', sno=sno, messages=messages, titles=titles)
 
 
 # 老师主页
 @bp.route('/teacher/<int:tno>', methods=['GET', 'POST'])
 def teacher(tno):
-    return render_template(os.path.join(templates_dir,'teacher.html'), tno=tno)
+    return render_template('teacher.html', tno=tno)
 
 
 # 老师个人登录密码修改功能
@@ -263,7 +264,7 @@ def teacher_account(tno):
         else:
             flash(u'原密码错误', 'warning')
 
-    return render_template(os.path.join(templates_dir,'teacher_account.html'), tno=tno,name=t_name,form=form)
+    return render_template('teacher_account.html', tno=tno,name=t_name,form=form)
 
 
 # 老师开课信息查看（开设课程基本信息、开设课程学生名单）
@@ -286,7 +287,7 @@ def teacher_course(tno):
         messages.append(message)
 
     titles = [('sno', '学员号'), ('name', '学员姓名'), ('gender', '性别'), ('major', '专业')]
-    return render_template(os.path.join(templates_dir,'teacher_course.html'), tno=tno, messages=messages, titles=titles)
+    return render_template('teacher_course.html', tno=tno, messages=messages, titles=titles)
 
 
 # 老师成绩录入和修改功能（手工录入）
@@ -326,7 +327,7 @@ def teacher_score(tno):
             else:
                 flash(u'该学生未选课', 'warning')
 
-    return render_template(os.path.join(templates_dir,'teacher_score.html'), tno=tno, messages=messages, titles=titles, form=form)
+    return render_template('teacher_score.html', tno=tno, messages=messages, titles=titles, form=form)
 
 
 # 成绩导入（新增和更新）功能（excel 文件导入）

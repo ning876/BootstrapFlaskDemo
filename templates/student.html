@@ -2,11 +2,11 @@
 {% from 'bootstrap/nav.html' import render_nav_item %}
 
 {% block head %}
-    {{ render_nav_item('student', sno, sno=sno) }}
-    {{ render_nav_item('student_account', '个人信息', sno=sno) }}
-    {{ render_nav_item('student_course_select', '学生选课', sno=sno) }}
-    {{ render_nav_item('student_course_delete', '学生退课', sno=sno) }}
-    {{ render_nav_item('student_score', '查看成绩', sno=sno) }}
-    {{ render_nav_item('index', '退出登录') }}
+    {{ render_nav_item('College-class-manager.student', sno, sno=sno) }}
+    {{ render_nav_item('College-class-manager.student_account', '个人信息', sno=sno) }}
+    {{ render_nav_item('College-class-manager.student_course_select', '学生选课', sno=sno) }}
+    {{ render_nav_item('College-class-manager.student_course_delete', '学生退课', sno=sno) }}
+    {{ render_nav_item('College-class-manager.student_score', '查看成绩', sno=sno) }}
+    {{ render_nav_item('College-class-manager.index', '退出登录') }}
 {% endblock %}
 

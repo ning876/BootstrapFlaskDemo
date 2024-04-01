@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import yaml
 from dotenv import load_dotenv
@@ -16,9 +17,9 @@ def get_container_id():
         container_message=resets[-1]
         container_id=container_message.strip().split('/')[-1][:8]
     except Exception as e:
-        import traceback
-        print('Fail to get container id')
-        traceback.print_exc()
+        #import traceback
+        #print('Fail to get container id')
+        #traceback.print_exc()
         container_id='Local-ID'
     return container_id
 
