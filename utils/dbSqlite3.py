@@ -3,9 +3,10 @@ import sqlite3
 from config import cfg
 
 database = cfg.get('db','').get('db_path','')
+
 # 建立数据库连接
 def OpenDb():
-    #database = "./resources/database/data.db"
+    #database = "../resources/database/data.db"
     conn = sqlite3.connect(database)
     # conn.row_factory = sqlite3.Row
     return conn
@@ -120,8 +121,8 @@ def DelDataById(id1, id2, value1, value2, tablename):
     conn.commit()
     CloseDb(conn)
 
-def alter_table(table_name,database):
-    conn = OpenDb(database)
+def alter_table(table_name):
+    conn = OpenDb()
     new_table_name = table_name + '_new'
     cursor = conn.cursor()
     #columns = ', '.join(add_columns.keys())
@@ -193,14 +194,16 @@ def show_table_scheam(db_obj,table_name):
 
 if __name__ == '__main__':
     database='../resources/database/data.db'
-    db=OpenDb(database)
+    db=OpenDb()
     table_name='student'
     #table_name='teacher'
     #table_name='course'
     #table_name='score'
     #show_table_scheam(db,table_name)
-    sqls="select * from student"
-    #sqls = "select * from teacher"
+    #sqls="select * from student"
+    sqls = "select * from teacher"
+    sqls = "select * from course"
+    #sqls = "SELECT name FROM sqlite_master WHERE type='table'"
     fileds,res=GetSql(db,sqls)
     print(fileds)
     print(res)

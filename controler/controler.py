@@ -4,6 +4,10 @@ from wtforms.fields import simple,choices,datetime,numeric
 from wtforms.validators import DataRequired, Length,NumberRange,InputRequired
 from flask_wtf import FlaskForm
 
+class CourseForm(FlaskForm):
+    select = choices.SelectField(u'操作类型', choices=[('login', 'Login'), ('register', 'Register')])
+    submit = simple.SubmitField(u'跳转')
+
 class IndexForm(FlaskForm):
     select = choices.SelectField(u'操作类型', choices=[('login', 'Login'), ('register', 'Register')])
     submit = simple.SubmitField(u'跳转')

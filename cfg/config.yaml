@@ -5,6 +5,11 @@ params:
   BOOTSTRAP_BTN_STYLE: primary
   BOOTSTRAP_BTN_SIZE: sm
 
+user_profile:
+  ALLOWED_EXTENSIONS:  {'png', 'jpg', 'jpeg'}
+  UPLOAD_FOLDER: ./resources/user_profile/
+
+
 db:
   type: sqlite
   db_path: ./resources/database/data.db

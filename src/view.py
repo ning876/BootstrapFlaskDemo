@@ -3,10 +3,11 @@ import os
 from flask import Flask, render_template, request, flash, url_for, redirect, Blueprint
 from controler.controler import *
 from utils.dbSqlite3 import *
-from config import basedir
+from utils.file_process import allowed_file,generate_filename
+from config import basedir,cfg
 templates_dir=os.path.join(basedir,'templates')
 #app = Flask(__name__)
-
+UPLOAD_FOLDER=cfg.get('user_profile','').get('UPLOAD_FOLDER','')
 bp=Blueprint('College-class-manager',__name__,url_prefix='')
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -40,16 +41,28 @@ def register_student():
         return render_template('Register.html', form=form)
 
     if form.validate_on_submit():
+
         result, _ = GetSql2("select * from student where sno='%s'" % form.userid.data)
-        print(result)
         if not result:
+            file = form.userprofie.data
+
+            if file and allowed_file(file.filename):
+                filename = generate_filename(file.filename)
+                file.filename = filename
+                file_path=os.path.join(UPLOAD_FOLDER, filename)
+                file.save(os.path.join('static',file_path))
+            else:
+                flash(u'上传用户头像为空或者格式不正确，请输入png, jpg, jpeg格式文件', 'warning')
+                return render_template('Register.html', form=form)
+
             data=dict(
                 sno=form.userid.data,
                 name=form.username.data,
                 gender=form.gender.data,
                 birthday=form.birth.data,
                 major=form.major.data,
-                password=form.password.data
+                password=form.password.data,
+                userprofile_url=file_path
             )
             InsertData(data,'student')
             return redirect('/Login')
@@ -113,7 +126,9 @@ def login():
 # 学生主页
 @bp.route('/student/<int:sno>', methods=['GET', 'POST'])
 def student(sno):
-    return render_template('student.html', sno=sno)
+    result, _ = GetSql2("select * from student where sno='%s'" % sno)
+    userprofile_url = result[0][6]
+    return render_template('student.html', sno=sno,userprofile_url=userprofile_url)
 
 
 # 基本信息查看、学生个人登录密码修改功能
@@ -128,7 +143,8 @@ def student_account(sno):
     #print(birthday)
     #birthtime = dt.fromtimestamp(result[0][3] / 1000.0).strftime('%Y-%m-%d')
     major = result[0][4]
-
+    userprofile_url = result[0][6]
+    #userprofile_url = os.path.join(basedir,userprofile_url)
     if form.validate_on_submit():
         result, _ = GetSql2("select * from student where sno='%s'" % sno)
         if form.secret.data == result[0][5]:
@@ -146,7 +162,7 @@ def student_account(sno):
             flash(u'原密码错误', 'warning')
 
     return render_template('student_account.html', sno=sno, name=name, gender=gender, birthday=birthday,
-                           major=major, form=form)
+                           major=major,userprofile_url=userprofile_url, form=form)
 
 
 # 学生选课功能
@@ -309,6 +325,10 @@ def teacher_score(tno):
 
     titles = [('sno', '学员号'), ('name', '学员姓名'), ('score', '成绩')]
 
+    if message==[]:
+        flash(u'所授课程暂无学生选修，暂时无法录入成绩')
+        return redirect(url_for('College-class-manager.teacher', tno=tno))
+
     if form.validate_on_submit():
         if not (form.title_cno.data and form.title_sno.data and form.title_score.data):
             flash(u'输入不完整', 'warning')
@@ -327,8 +347,15 @@ def teacher_score(tno):
             else:
                 flash(u'该学生未选课', 'warning')
 
-    return render_template('teacher_score.html', tno=tno, messages=messages, titles=titles, form=form)
 
+    return render_template('teacher_score.html', tno=tno, messages=messages, titles=titles, form=form)
 
 # 成绩导入（新增和更新）功能（excel 文件导入）
 # 这个需求会引发太多的Bug，需要excel严格遵守某种格式，故在目前的版本中暂不实现
+
+
+## 老师排课表
+@bp.route('/course/arrange', methods=['GET', 'POST'])
+def course_arrange():
+    course_form=
+

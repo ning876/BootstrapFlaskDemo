@@ -13,7 +13,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = cfg.get('params','').get('SQLALCHEMY_DAT
 # set default button sytle and size, will be overwritten by macro parameters
 app.config['BOOTSTRAP_BTN_STYLE'] = cfg.get('params','').get('BOOTSTRAP_BTN_STYLE','')
 app.config['BOOTSTRAP_BTN_SIZE'] = cfg.get('params','').get('BOOTSTRAP_BTN_SIZE','')
-
+app.config['UPLOAD_FOLDER'] = cfg.get('params','').get('UPLOAD_FOLDER','')
 bootstrap = Bootstrap(app)
 db = SQLAlchemy(app)
 print(db)
