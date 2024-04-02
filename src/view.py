@@ -20,7 +20,8 @@ def index():
             return redirect('/Login')
         elif form.select.data == 'register':
             return redirect('/Register_route')
-
+        elif form.select.data == 'course':
+            return redirect('/course/arrange')
 # 注册路由页
 @bp.route('/Register_route', methods=['GET', 'POST'])
 def register_route():
@@ -77,7 +78,7 @@ def register_teacher():
         return render_template('Register.html', form=form)
 
     if form.validate_on_submit():
-        result, _ = GetSql2("select * from student where sno='%s'" % form.userid.data)
+        result, _ = GetSql2("select * from student where tno='%s'" % form.userid.data)
         if not result:
             data=dict(
                 tno=form.userid.data,
@@ -323,9 +324,9 @@ def teacher_score(tno):
             message.append(row)
         messages.append(message)
 
-    titles = [('sno', '学员号'), ('name', '学员姓名'), ('score', '成绩')]
-
-    if message==[]:
+    titles = [('cname', '课程名称'),('cno', '课程编码'), ('name', '学员姓名'), ('score', '成绩')]
+    print(messages)
+    if messages==[]:
         flash(u'所授课程暂无学生选修，暂时无法录入成绩')
         return redirect(url_for('College-class-manager.teacher', tno=tno))
 
@@ -346,9 +347,7 @@ def teacher_score(tno):
                 return redirect(url_for('teacher_score', tno=tno, messages=messages, titles=titles, form=form))
             else:
                 flash(u'该学生未选课', 'warning')
-
-
-    return render_template('teacher_score.html', tno=tno, messages=messages, titles=titles, form=form)
+                return render_template('teacher_score.html', tno=tno, messages=messages, titles=titles, form=form)
 
 # 成绩导入（新增和更新）功能（excel 文件导入）
 # 这个需求会引发太多的Bug，需要excel严格遵守某种格式，故在目前的版本中暂不实现
@@ -357,5 +356,30 @@ def teacher_score(tno):
 ## 老师排课表
 @bp.route('/course/arrange', methods=['GET', 'POST'])
 def course_arrange():
-    course_form=
+    form=CourseForm()
+    result_course, _ = GetSql2("SELECT a.cno,a.name as cname,a.tno,b.name as tname FROM course a inner join teacher b on a.tno=b.tno")
+    messages = []
+    for i in result_course:
+        #message = []
+        row = {'cname': i[1], 'cno': i[0], 'tno': i[2],'tname': i[3]}
+        messages.append(row)
+    titles = [('cno', '课程号'), ('cname', '课程名称'), ('tno', '教师编码'),('tname','教师姓名')]
+    if messages==[]:
+        flash(u'目前暂时未安排课程表，请及时新增课程信息')
+    if request.method == "GET":
+        return render_template('Course.html',messages=messages, titles=titles, form=form)
 
+    if form.validate_on_submit():
+        result_course, _ = GetSql2(
+            "SELECT * FROM course where cno= %s" % form.cno.data)
+        if not result_course:
+            data={
+                "cno":form.cno.data,
+                "name":form.cname.data,
+                "tno":form.tno.data
+            }
+            InsertData(data,'course')
+            return redirect('/course/arrange')
+        else:
+            flash(u'该课程已分配老师，请修改后重试', 'warning')
+            return render_template('Course.html', messages=messages, titles=titles,form=form)

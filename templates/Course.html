@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% from 'bootstrap/form.html' import render_form %}
+{% from 'bootstrap/nav.html' import render_nav_item %}
+{% from 'bootstrap/utils.html' import render_flashed_messages %}
+{% from 'bootstrap/table.html' import render_table %}
+
+
+{% block head %}
+    {{ render_nav_item('College-class-manager.index', 'Home') }}
+{% endblock %}
+
+{% block content %}
+    <h1>Course arrange</h1>
+
+    {{ render_table(messages, titles=titles, primary_key='cno',) }}
+    <br>
+    {{ render_form(form, form_type="inline") }}
+{% endblock %}

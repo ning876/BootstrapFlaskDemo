@@ -4,12 +4,22 @@ from wtforms.fields import simple,choices,datetime,numeric
 from wtforms.validators import DataRequired, Length,NumberRange,InputRequired
 from flask_wtf import FlaskForm
 
+from utils.dbSqlite3 import *
+
 class CourseForm(FlaskForm):
-    select = choices.SelectField(u'操作类型', choices=[('login', 'Login'), ('register', 'Register')])
-    submit = simple.SubmitField(u'跳转')
+    def __init__(self, *args, **kwargs):
+        super(CourseForm, self).__init__(*args, **kwargs)
+        # 从数据库或其他地方获取选项
+        result_t,_=GetSql2('select distinct tno ,name from teacher')
+        self.tno.choices = [(item[0], item[1]) for item in result_t]
+
+    cno= numeric.IntegerField(u'课程编码' ,validators=[DataRequired(),NumberRange(1, 10000)])
+    cname= simple.StringField(u'课程名称' ,validators=[DataRequired(),Length(1, 10)])
+    tno = choices.SelectField(u'教师编码')
+    submit = simple.SubmitField(u'新增')
 
 class IndexForm(FlaskForm):
-    select = choices.SelectField(u'操作类型', choices=[('login', 'Login'), ('register', 'Register')])
+    select = choices.SelectField(u'操作类型', choices=[('login', 'Login'), ('register', 'Register'),('course', 'Course')])
     submit = simple.SubmitField(u'跳转')
 
 class LoginForm(FlaskForm):
