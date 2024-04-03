@@ -115,7 +115,7 @@ def DelDataById(id1, id2, value1, value2, tablename):
     cursor = conn.cursor()
 
     sql = "delete from %s  where %s=? and %s=?" % (tablename, id1, id2)
-    # print (sql)
+    #print (sql)
 
     cursor.execute(sql, (value1, value2))
     conn.commit()
@@ -203,8 +203,10 @@ if __name__ == '__main__':
     #sqls="select * from student"
     sqls = "select * from teacher"
     sqls = "select * from course"
+    sqls = "select * from score"
     #sqls = "SELECT name FROM sqlite_master WHERE type='table'"
     fileds,res=GetSql(db,sqls)
     print(fileds)
     print(res)
+    #DelDataById('cno','cno',8,11,'course')
     #alter_table(table_name,database)

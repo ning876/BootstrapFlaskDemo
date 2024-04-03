@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from flask import Flask, render_template, request, flash, url_for, redirect, Blueprint
+from pyecharts import ECharts
 from controler.controler import *
 from utils.dbSqlite3 import *
 from utils.file_process import allowed_file,generate_filename
@@ -177,6 +178,9 @@ def student_course_select(sno):
     for i in result_course:
         result_teacher = GetSql2("select name from teacher where tno='%s'" % i[2])
         result_score = GetSql2("select count(*) from score where cno='%s'" % i[0])
+        #print(i)
+        #print(result_teacher)
+        #print(result_score)
         message = {'cno': i[0], 'name': i[1], 'tname': result_teacher[0][0][0], 'count': result_score[0][0][0]}
         messages.append(message)
 
@@ -230,7 +234,7 @@ def student_course_delete(sno):
             else:
                 DelDataById('sno', 'cno', sno, form.title.data, "score")
                 flash('退课成功', 'success')
-                return redirect(url_for('student_course_delete', sno=sno, messages=messages, titles=titles,
+                return redirect(url_for('College-class-manager.student_course_delete', sno=sno, messages=messages, titles=titles,
                                         form=form))
 
     return render_template('student_course_delete.html', sno=sno, messages=messages, titles=titles, form=form)
@@ -315,6 +319,8 @@ def teacher_score(tno):
     result_course, _ = GetSql2("SELECT * FROM course WHERE tno='%s'" % tno)
 
     messages = []
+    cno_list=[]
+    sno_list=[]
     for i in result_course:
         message = []
         result_score, _ = GetSql2("SELECT * FROM score WHERE cno='%s'" % i[0])
@@ -322,17 +328,19 @@ def teacher_score(tno):
             result_student, _ = GetSql2("select name from student where sno='%s'" % j[0])
             row = {'cname': i[1], 'cno': i[0], 'sno': j[0], 'name': result_student[0][0], 'score': j[2]}
             message.append(row)
-        messages.append(message)
+            cno_list.append(str(i[0]))
+            sno_list.append(str(j[0]))
+        if message!=[]:
+            messages.append(message)
 
     titles = [('cname', '课程名称'),('cno', '课程编码'), ('name', '学员姓名'), ('score', '成绩')]
-    print(messages)
-    if messages==[]:
-        flash(u'所授课程暂无学生选修，暂时无法录入成绩')
-        return redirect(url_for('College-class-manager.teacher', tno=tno))
 
     if form.validate_on_submit():
         if not (form.title_cno.data and form.title_sno.data and form.title_score.data):
             flash(u'输入不完整', 'warning')
+        if form.title_cno.data not in cno_list or form.title_sno.data not in sno_list:
+
+            flash(u'无权限录入该课程或该学生的成绩', 'warning')
         else:
             result, _ = GetSql2(
                 "select * from score where cno='%s' and sno='%s'" % (form.title_cno.data, form.title_sno.data))
@@ -344,18 +352,95 @@ def teacher_score(tno):
                 )
                 UpdateData(data, "score")
                 flash(u'录入成功！', 'success')
-                return redirect(url_for('teacher_score', tno=tno, messages=messages, titles=titles, form=form))
+                return redirect(url_for('College-class-manager.teacher_score', tno=tno, messages=messages, titles=titles, form=form))
             else:
-                flash(u'该学生未选课', 'warning')
-                return render_template('teacher_score.html', tno=tno, messages=messages, titles=titles, form=form)
+                flash(u'该学生未选课，无法录入成绩', 'warning')
+    return render_template('teacher_score.html', tno=tno, messages=messages, titles=titles, form=form)
 
 # 成绩导入（新增和更新）功能（excel 文件导入）
 # 这个需求会引发太多的Bug，需要excel严格遵守某种格式，故在目前的版本中暂不实现
 
 
+## 老师修改成绩
+@bp.route('/teacher/<int:tno>/<int:cno>/<int:sno>/score_adjust', methods=['GET', 'POST'])
+def teacher_adjust_score(tno,cno,sno):
+    form = ScoreadjustForm()
+    result_SCORE, _ = GetSql2("SELECT a.*,b.name as sname,c.name as cname FROM score a inner join student b on a.sno=b.sno"
+                              "inner join course c on a.cno=c.cno  WHERE a.sno='%s' "
+                              "and a.cno='%s'" %( sno,cno))
+    messages = []
+    for i in result_SCORE:
+        row = {'cname': i[4], 'cno': i[1], 'sno': i[0], 'sname': i[3], 'score': i[2]}
+        messages.append(row)
+
+    titles = [('cname', '课程名称'),('cno', '课程编码'), ('sno', '学员编号'),('name', '学员姓名'), ('score', '成绩')]
+
+    if form.validate_on_submit():
+        if not  form.adjust_score.data:
+            flash(u'输入不完整', 'warning')
+        else:
+            data=dict(
+                sno=form.title_sno.data,
+                cno=form.title_cno.data,
+                score=form.title_score.data
+            )
+            UpdateData(data,'score')
+            result, _ = GetSql2(
+                "select * from score where cno='%s' and sno='%s' and score is not null" % (form.title_cno.data, form.title_sno.data))
+            if not result:
+                data = dict(
+                    sno=form.title_sno.data,
+                    cno=form.title_cno.data,
+                    score=form.title_score.data
+                )
+                UpdateData(data, "score")
+                flash(u'录入成功！', 'success')
+                return redirect(url_for('College-class-manager.teacher_score', tno=tno, messages=messages, titles=titles, form=form))
+            else:
+                flash(u'该学生已有成绩，请尝试修改成绩', 'warning')
+    return render_template('teacher_score.html', tno=tno, messages=messages, titles=titles, form=form)
+
 ## 老师排课表
 @bp.route('/course/arrange', methods=['GET', 'POST'])
 def course_arrange():
+    form=CourseForm()
+    result_course, _ = GetSql2("SELECT a.cno,a.name as cname,a.tno,b.name as tname FROM course a inner join teacher b on a.tno=b.tno")
+    messages = []
+    for i in result_course:
+        #message = []
+        row = {'cname': i[1], 'cno': i[0], 'tno': i[2],'tname': i[3]}
+        messages.append(row)
+    titles = [('cno', '课程号'), ('cname', '课程名称'), ('tno', '教师编码'),('tname','教师姓名')]
+    if messages==[]:
+        flash(u'目前暂时未安排课程表，请及时新增课程信息')
+    if request.method == "GET":
+        return render_template('Course.html',messages=messages, titles=titles, form=form)
+
+    if form.validate_on_submit():
+        result_course, _ = GetSql2(
+            "SELECT * FROM course where cno= %s" % form.cno.data)
+        if not result_course:
+            data={
+                "cno":form.cno.data,
+                "name":form.cname.data,
+                "tno":form.tno.data
+            }
+            InsertData(data,'course')
+            return redirect('/course/arrange')
+        else:
+            flash(u'该课程已分配老师，请修改后重试', 'warning')
+            return render_template('Course.html', messages=messages, titles=titles,form=form)
+
+
+## 老师排课表
+@bp.route('/teacher/<int:tno>/score_bar', methods=['GET', 'POST'])
+def course_arrange():
+    chart = echarts.bar(
+        title='示例柱状图',
+        legend=['销量'],
+        x_axis=['衬衫', '羊毛衫', '雪纺衫', '裤子', '高跟鞋', '袜子'],
+        series=[120, 200, 150, 80, 70, 230]
+    )
     form=CourseForm()
     result_course, _ = GetSql2("SELECT a.cno,a.name as cname,a.tno,b.name as tname FROM course a inner join teacher b on a.tno=b.tno")
     messages = []

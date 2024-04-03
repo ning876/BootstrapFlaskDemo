@@ -73,3 +73,7 @@ class ScoreForm(FlaskForm):
     title_cno = simple.StringField(u'课程号', render_kw={'placeholder': '课程号'})
     title_score = simple.StringField(u'分数', render_kw={'placeholder': '分数'})
     submit = simple.SubmitField(u'录入')
+
+class ScoreadjustForm(FlaskForm):
+    adjust_score = simple.StringField(u'修改后分数', render_kw={'placeholder': '分数'})
+    submit = simple.SubmitField(u'修改')
